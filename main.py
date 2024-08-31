@@ -75,7 +75,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if message.content.lower().strip().endswith("когда?"):
+    if re.search(r'\bкогда\b(?!\-|\w)', message.content.lower()):
         await message.reply("Завтра")
 
     for who in WHO_TO_INSULT:
@@ -84,7 +84,7 @@ async def on_message(message):
             if re.search(pattern, message.content.lower()):
                 role = message.guild.get_role(ROLE_ID_TO_MENTION)
                 if role:
-                    await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу: '{who} {how}'!")
+                    await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
                 return
 
 bot.run(TOKEN)
