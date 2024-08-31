@@ -23,8 +23,7 @@ async def on_ready():
     for guild in bot.guilds:
         print(f'Бот подключен к серверу: {guild.name}')
 
-@bot.slash_command(name='my_ckey', description='Укажите ваш сикей в игре.',
-                   guild_ids=GUILD_IDS)
+@bot.slash_command(name='my_ckey', description='Укажите ваш сикей в игре.', guild_ids=GUILD_IDS)
 async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш сикей в игре")):
     if not re.match("^[a-zA-Z0-9_]+$", ckey):
         await ctx.respond("Сикей должен содержать только английские буквы, цифры и символ подчеркивания.")
@@ -60,5 +59,13 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
             f.write(new_record)
 
     await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре.')
+
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    if message.content.lower().strip().endswith("когда?"):
+        await message.reply("Завтра")
 
 bot.run(TOKEN)
