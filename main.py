@@ -25,7 +25,8 @@ def load_phrases(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return [line.strip().lower() for line in file.readlines() if line.strip()]
 
-PHRASES_TO_SEARCH = load_phrases('phrases.txt')
+WHO_TO_INSULT = load_phrases('who.txt')
+HOW_TO_INSULT = load_phrases('how.txt')
 
 @bot.event
 async def on_ready():
@@ -77,12 +78,13 @@ async def on_message(message):
     if message.content.lower().strip().endswith("когда?"):
         await message.reply("Завтра")
 
-    for phrase in PHRASES_TO_SEARCH:
-        words = phrase.split()
-        if all(re.search(r'(?=.*' + re.escape(word) + r')', message.content.lower()) for word in words):
-            role = message.guild.get_role(ROLE_ID_TO_MENTION)
-            if role:
-                await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
-            break
+    for who in WHO_TO_INSULT:
+        for how in HOW_TO_INSULT:
+            pattern = r'(?=.*' + re.escape(who) + r')(?=.*' + re.escape(how) + r')'
+            if re.search(pattern, message.content.lower()):
+                role = message.guild.get_role(ROLE_ID_TO_MENTION)
+                if role:
+                    await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу: '{who} {how}'!")
+                return
 
 bot.run(TOKEN)
