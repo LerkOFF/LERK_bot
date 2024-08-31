@@ -9,6 +9,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD_IDS = list(map(int, os.getenv('GUILD_IDS').split(',')))
 TRACKED_ROLES = list(map(int, os.getenv('TRACKED_ROLES').split(',')))
+ROLE_ID_TO_MENTION = int(os.getenv('ROLE_ID_TO_MENTION'))
 
 intents = discord.Intents.default()
 intents.members = True
@@ -17,6 +18,14 @@ intents.messages = True
 intents.message_content = True
 
 bot = discord.Bot(intents=intents)
+
+def load_phrases(file_path):
+    if not os.path.exists(file_path):
+        return []
+    with open(file_path, 'r', encoding='utf-8') as file:
+        return [line.strip().lower() for line in file.readlines() if line.strip()]
+
+PHRASES_TO_SEARCH = load_phrases('phrases.txt')
 
 @bot.event
 async def on_ready():
@@ -67,5 +76,13 @@ async def on_message(message):
 
     if message.content.lower().strip().endswith("когда?"):
         await message.reply("Завтра")
+
+    for phrase in PHRASES_TO_SEARCH:
+        pattern = re.compile(r'\b' + r'\W*'.join(re.escape(word) for word in phrase.split()) + r'\b', re.IGNORECASE)
+        if pattern.search(message.content):
+            role = message.guild.get_role(ROLE_ID_TO_MENTION)
+            if role:
+                await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
+            break
 
 bot.run(TOKEN)
