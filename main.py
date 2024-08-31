@@ -78,8 +78,8 @@ async def on_message(message):
         await message.reply("Завтра")
 
     for phrase in PHRASES_TO_SEARCH:
-        pattern = re.compile(r'\b' + r'\W*'.join(re.escape(word) for word in phrase.split()) + r'\b', re.IGNORECASE)
-        if pattern.search(message.content):
+        words = phrase.split()
+        if all(re.search(r'(?=.*' + re.escape(word) + r')', message.content.lower()) for word in words):
             role = message.guild.get_role(ROLE_ID_TO_MENTION)
             if role:
                 await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
