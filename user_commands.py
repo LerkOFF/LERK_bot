@@ -5,6 +5,7 @@ from config import TRACKED_ROLES, CKEY_CHANNEL_ID, SPONSORS_FILE_PATH
 import re
 from logger import log_user_action
 
+
 async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш сикей в игре")):
     try:
         ckey_channel = ctx.guild.get_channel(CKEY_CHANNEL_ID)
@@ -13,7 +14,8 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
             return
 
         if ctx.channel.id != CKEY_CHANNEL_ID:
-            await ctx.respond(f"Эта команда может использоваться только в канале {ckey_channel.mention}.", ephemeral=True)
+            await ctx.respond(f"Эта команда может использоваться только в канале {ckey_channel.mention}.",
+                              ephemeral=True)
             return
 
         if not re.match("^[a-zA-Z0-9_]+$", ckey):

@@ -2,6 +2,7 @@ from openpyxl import load_workbook, Workbook
 from config import LOG_FILE_PATH
 from datetime import datetime
 
+
 def log_user_action(action, user):
     try:
         try:

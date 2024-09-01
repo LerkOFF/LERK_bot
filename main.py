@@ -17,12 +17,15 @@ bot = discord.Bot(intents=intents)
 WHO_TO_INSULT = load_phrases('phrases/who.txt')
 HOW_TO_INSULT = load_phrases('phrases/how.txt')
 
+
 @bot.event
 async def on_ready():
     for guild in bot.guilds:
         print(f'Бот подключен к серверу: {guild.name}')
 
+
 bot.slash_command(name='my_ckey', description='Укажите ваш сикей в игре.', guild_ids=GUILD_IDS)(my_ckey)
+
 
 @bot.event
 async def on_message(message):
@@ -36,6 +39,7 @@ async def on_message(message):
         role = message.guild.get_role(ROLE_ID_TO_MENTION)
         if role:
             await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
+
 
 bot.event(on_member_update)
 

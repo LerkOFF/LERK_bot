@@ -1,6 +1,6 @@
 import discord
 from config import TRACKED_ROLES, INFO_CHANNEL_ID, SPONSORS_FILE_PATH, CKEY_CHANNEL_ID
-from logger import log_user_action  # Импортируем функцию логирования
+from logger import log_user_action
 
 
 async def on_member_update(before, after):
@@ -17,7 +17,7 @@ async def on_member_update(before, after):
         ckey_channel = after.guild.get_channel(CKEY_CHANNEL_ID)
         if ckey_channel:
             await ckey_channel.send(
-                f"Привет, {after.mention}! Ты стал спонсором. Если хочешь получить доступ к донат-магазину в игре - используй команду **/my_ckey**"
+                f"Привет, {after.mention}! Ты стал спонсором с доступом к донат-магазину, если хочешь получить доступ к нему в игре - используй команду **/my_ckey**"
             )
         log_user_action(f"Role added: {role_name}", after)
 
