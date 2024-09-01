@@ -1,15 +1,11 @@
-import os
+from datetime import datetime
+
 import discord
 from discord import Option
 from dotenv import load_dotenv
-from datetime import datetime
+from config import TOKEN, GUILD_IDS, ROLE_ID_TO_MENTION, TRACKED_ROLES
+from insults import check_insults, load_phrases
 import re
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD_IDS = list(map(int, os.getenv('GUILD_IDS').split(',')))
-TRACKED_ROLES = list(map(int, os.getenv('TRACKED_ROLES').split(',')))
-ROLE_ID_TO_MENTION = int(os.getenv('ROLE_ID_TO_MENTION'))
 
 intents = discord.Intents.default()
 intents.members = True
@@ -19,14 +15,8 @@ intents.message_content = True
 
 bot = discord.Bot(intents=intents)
 
-def load_phrases(file_path):
-    if not os.path.exists(file_path):
-        return []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return [line.strip().lower() for line in file.readlines() if line.strip()]
-
-WHO_TO_INSULT = load_phrases('who.txt')
-HOW_TO_INSULT = load_phrases('how.txt')
+WHO_TO_INSULT = load_phrases('phrases/who.txt')
+HOW_TO_INSULT = load_phrases('phrases/how.txt')
 
 @bot.event
 async def on_ready():
@@ -78,13 +68,9 @@ async def on_message(message):
     if re.search(r'\bкогда\b(?!\-|\w)', message.content.lower()):
         await message.reply("Завтра")
 
-    for who in WHO_TO_INSULT:
-        for how in HOW_TO_INSULT:
-            pattern = r'(?=.*' + re.escape(who) + r')(?=.*' + re.escape(how) + r')'
-            if re.search(pattern, message.content.lower()):
-                role = message.guild.get_role(ROLE_ID_TO_MENTION)
-                if role:
-                    await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
-                return
+    if check_insults(message, WHO_TO_INSULT, HOW_TO_INSULT):
+        role = message.guild.get_role(ROLE_ID_TO_MENTION)
+        if role:
+            await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
 
 bot.run(TOKEN)
