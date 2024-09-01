@@ -16,12 +16,9 @@ async def on_member_update(before, after):
     removed_tracked_roles = [role for role in removed_roles if role.id in TRACKED_ROLES]
 
     if removed_tracked_roles:
-        try:
-            await after.send(f"Ваша подписка закончилась, так как вы потеряли роль {removed_tracked_roles[0].mention}.")
-        except discord.Forbidden:
-            info_channel = after.guild.get_channel(INFO_CHANNEL_ID)
-            if info_channel:
-                await info_channel.send(f"{after.mention}, ваша подписка закончилась.")
+        info_channel = after.guild.get_channel(INFO_CHANNEL_ID)
+        if info_channel:
+            await info_channel.send(f"{after.mention}, ваша подписка на бусти закончилась.")
 
         try:
             with open(SPONSORS_FILE_PATH, 'r') as f:
