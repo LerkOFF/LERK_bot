@@ -3,7 +3,7 @@ from datetime import datetime
 import discord
 from discord import Option
 from dotenv import load_dotenv
-from config import TOKEN, GUILD_IDS, ROLE_ID_TO_MENTION, CKEY_CHANNEL_ID, TRACKED_ROLES
+from config import TOKEN, GUILD_IDS, ROLE_ID_TO_MENTION, CKEY_CHANNEL_ID, TRACKED_ROLES, INFO_CHANNEL_ID, SPONSORS_FILE_PATH
 from insults import check_insults, load_phrases
 import re
 
@@ -51,12 +51,12 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
         new_record = f"{member.name}, {ckey}, {tracked_roles[0]}, {time_now}\n"
 
         try:
-            with open('discord_sponsors.txt', 'r') as f:
+            with open(SPONSORS_FILE_PATH, 'r') as f:
                 lines = f.readlines()
         except FileNotFoundError:
             lines = []
 
-        with open('discord_sponsors.txt', 'w') as f:
+        with open(SPONSORS_FILE_PATH, 'w') as f:
             updated = False
             for line in lines:
                 if line.startswith(f"{member.name},"):
@@ -86,5 +86,29 @@ async def on_message(message):
         role = message.guild.get_role(ROLE_ID_TO_MENTION)
         if role:
             await message.reply(f"{role.mention}, сообщение содержит запрещенную фразу!")
+
+@bot.event
+async def on_member_update(before, after):
+    removed_roles = set(before.roles) - set(after.roles)
+    removed_tracked_roles = [role for role in removed_roles if role.id in TRACKED_ROLES]
+
+    if removed_tracked_roles:
+        try:
+            await after.send(f"Ваша подписка закончилась, так как вы потеряли роль {removed_tracked_roles[0].mention}.")
+        except discord.Forbidden:
+            info_channel = after.guild.get_channel(INFO_CHANNEL_ID)
+            if info_channel:
+                await info_channel.send(f"{after.mention}, ваша подписка закончилась.")
+
+        try:
+            with open(SPONSORS_FILE_PATH, 'r') as f:
+                lines = f.readlines()
+        except FileNotFoundError:
+            lines = []
+
+        with open(SPONSORS_FILE_PATH, 'w') as f:
+            for line in lines:
+                if not line.startswith(f"{after.name},"):
+                    f.write(line)
 
 bot.run(TOKEN)
