@@ -13,14 +13,14 @@ distro==1.9.0
 et-xmlfile==1.1.0
 exceptiongroup==1.2.2
 frozenlist==1.4.1
-h11==0.14.0
-httpcore==0.13.7
+h11==0.12.0
+httpcore==0.13.3
 httpx==1.0.0b0
 idna==3.8
 jiter==0.5.0
 markdown-it-py==3.0.0
 mdurl==0.1.2
-multidict==4.7.6
+multidict==6.0.5
 numpy==2.1.0
 openpyxl==3.1.5
 pandas==2.2.2
