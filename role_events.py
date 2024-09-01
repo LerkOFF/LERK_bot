@@ -9,16 +9,19 @@ async def on_member_update(before, after):
         ckey_channel = after.guild.get_channel(CKEY_CHANNEL_ID)
         if ckey_channel:
             await ckey_channel.send(
-                f"Привет, {after.mention}! Ты стал спонсором. Если хочешь получить доступ к донат-магазину в игре - используй команду `/my_ckey`."
+                f"Привет, {after.mention}! Ты стал спонсором. Если хочешь получить доступ к донат-магазину в игре - используй команду **/my_ckey**"
             )
 
     removed_roles = set(before.roles) - set(after.roles)
     removed_tracked_roles = [role for role in removed_roles if role.id in TRACKED_ROLES]
 
     if removed_tracked_roles:
-        info_channel = after.guild.get_channel(INFO_CHANNEL_ID)
-        if info_channel:
-            await info_channel.send(f"{after.mention}, ваша подписка на бусти закончилась.")
+        try:
+            await after.send(f"Ваша подписка на бусти **https://boosty.to/aavikko.ss14** закончилась.")
+        except discord.Forbidden:
+            info_channel = after.guild.get_channel(INFO_CHANNEL_ID)
+            if info_channel:
+                await info_channel.send(f"{after.mention}, ваша подписка закончилась.")
 
         try:
             with open(SPONSORS_FILE_PATH, 'r') as f:
