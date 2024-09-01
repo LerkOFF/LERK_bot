@@ -3,6 +3,7 @@ import discord
 from discord import Option
 from config import TRACKED_ROLES, CKEY_CHANNEL_ID, SPONSORS_FILE_PATH
 import re
+from logger import log_user_action
 
 async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш сикей в игре")):
     try:
@@ -49,6 +50,7 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
                 f.write(new_record)
 
         await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре.')
+        log_user_action(f'CKEY command used: {ckey}', member)
 
     except Exception as e:
         await ctx.respond(f"Произошла ошибка: {e}", ephemeral=True)
