@@ -1,6 +1,6 @@
 import discord
 from dotenv import load_dotenv
-from config import TOKEN, GUILD_IDS, ROLE_ID_TO_MENTION
+from config import TOKEN, GUILD_IDS, ROLE_ID_TO_MENTION, RESPOND_CHANNEL_IDS
 from insults import check_insults, load_phrases
 from user_commands import my_ckey
 from role_events import on_member_update
@@ -32,8 +32,9 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    if re.search(r'\bкогда\b(?!\-|\w)', message.content.lower()):
-        await message.reply("Завтра")
+    if message.channel.id in RESPOND_CHANNEL_IDS:
+        if re.search(r'\bкогда\b(?!\-|\w)', message.content.lower()):
+            await message.reply("Завтра")
 
     if check_insults(message, WHO_TO_INSULT, HOW_TO_INSULT):
         role = message.guild.get_role(ROLE_ID_TO_MENTION)
