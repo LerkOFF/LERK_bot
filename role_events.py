@@ -8,9 +8,9 @@ async def on_member_update(before, after):
     added_tracked_roles = [role for role in added_roles if role.id in TRACKED_ROLES]
 
     if added_tracked_roles:
-        role_name = added_tracked_roles[0].name
+        role_id = added_tracked_roles[0].id
         try:
-            await after.send(f"Спасибо, что подписались на бусти! Теперь вы {role_name}.")
+            await after.send(f"Спасибо, что подписались на бусти! Теперь вы {added_tracked_roles[0].name}.")
         except discord.Forbidden:
             print(f"Не удалось отправить личное сообщение пользователю {after.name}. Личные сообщения отключены.")
 
@@ -19,16 +19,16 @@ async def on_member_update(before, after):
             await ckey_channel.send(
                 f"Привет, {after.mention}! Ты стал спонсором с доступом к донат-магазину, если хочешь получить доступ к нему в игре - используй команду **/my_ckey**"
             )
-        log_user_action(f"Role added: {role_name}", after)
+        log_user_action(f"Role added: {role_id}", after)
 
     removed_roles = set(before.roles) - set(after.roles)
     removed_tracked_roles = [role for role in removed_roles if role.id in TRACKED_ROLES]
 
     if removed_tracked_roles:
-        role_name = removed_tracked_roles[0].name
+        role_id = removed_tracked_roles[0].id
         try:
             await after.send(
-                f"Видимо Ваша подписка на бусти **https://boosty.to/aavikko.ss14** закончилась, так как вы потеряли роль: {role_name}.")
+                f"Видимо Ваша подписка на бусти **https://boosty.to/aavikko.ss14** закончилась, так как вы потеряли роль: {removed_tracked_roles[0].name}.")
         except discord.Forbidden:
             info_channel = after.guild.get_channel(INFO_CHANNEL_ID)
             if info_channel:
@@ -45,4 +45,4 @@ async def on_member_update(before, after):
                 if not line.startswith(f"{after.name},"):
                     f.write(line)
 
-        log_user_action(f"Role removed: {role_name}", after)
+        log_user_action(f"Role removed: {role_id}", after)
