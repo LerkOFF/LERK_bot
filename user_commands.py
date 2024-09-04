@@ -77,7 +77,9 @@ async def check_permissions_and_find_member_role(ctx, nickname, role_id):
 
     return member, role, None
 
-async def give_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ник пользователя"), role_id: Option(str, "ID роли")):
+
+async def give_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ник пользователя"),
+                    role_id: Option(str, "ID роли")):
     member, role, error = await check_permissions_and_find_member_role(ctx, nickname, role_id)
 
     if error:
@@ -90,7 +92,9 @@ async def give_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ни
     except Exception as e:
         await ctx.respond(f"Произошла ошибка при назначении роли: {e}", ephemeral=True)
 
-async def remove_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ник пользователя"), role_id: Option(str, "ID роли")):
+
+async def remove_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ник пользователя"),
+                      role_id: Option(str, "ID роли")):
     member, role, error = await check_permissions_and_find_member_role(ctx, nickname, role_id)
 
     if error:
@@ -119,4 +123,3 @@ async def make_roles_file(ctx: discord.ApplicationContext):
 
     except Exception as e:
         await ctx.respond(f"Произошла ошибка при создании файла: {e}", ephemeral=True)
-
