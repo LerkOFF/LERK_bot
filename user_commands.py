@@ -61,11 +61,27 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
 
 async def change_my_name_color(ctx: discord.ApplicationContext, color_hex: Option(str, "HEX-код цвета")):
     try:
+        ckey_channel = ctx.guild.get_channel(CKEY_CHANNEL_ID)
+        if ckey_channel is None:
+            await ctx.respond("Ошибка: указанный канал для команды не найден.", ephemeral=True)
+            return
+
+        if ctx.channel.id != CKEY_CHANNEL_ID:
+            await ctx.respond(f"Эта команда может использоваться только в канале {ckey_channel.mention}.", ephemeral=True)
+            return
+
         if not re.match(r'^#([A-Fa-f0-9]{6})$', color_hex):
             await ctx.respond("Неверный формат HEX-кода. Используйте формат #RRGGBB.", ephemeral=True)
             return
 
         member = ctx.author
+        member_roles = set([role.id for role in member.roles])
+        tracked_roles = [role_id for role_id in member_roles if role_id in TRACKED_ROLES]
+
+        if not tracked_roles:
+            await ctx.respond("Вы не спонсор.", ephemeral=True)
+            return
+
         sponsor_record_found = False
         updated_lines = []
 
@@ -101,6 +117,7 @@ async def change_my_name_color(ctx: discord.ApplicationContext, color_hex: Optio
 
     except Exception as e:
         await ctx.respond(f"Произошла ошибка при изменении цвета имени: {e}", ephemeral=True)
+        log_user_action(f'Error changing color: {e}', member)
 
 
 async def check_permissions_and_find_member_role(ctx, nickname, role_id):
