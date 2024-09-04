@@ -1,7 +1,7 @@
 from datetime import datetime
 import discord
 from discord import Option
-from config import TRACKED_ROLES, CKEY_CHANNEL_ID, SPONSORS_FILE_PATH
+from config import TRACKED_ROLES, CKEY_CHANNEL_ID, SPONSORS_FILE_PATH, CAN_GIVES_ROLES, ROLE_GIVER_CHANNEL
 import re
 from logger import log_user_action
 
@@ -57,3 +57,66 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
     except Exception as e:
         await ctx.respond(f"Произошла ошибка: {e}", ephemeral=True)
         raise
+
+
+async def check_permissions_and_find_member_role(ctx, nickname, role_id):
+    if ctx.channel.id != ROLE_GIVER_CHANNEL:
+        return None, None, "Команда вызвана не в разрешённом канале."
+
+    if ctx.author.name not in CAN_GIVES_ROLES:
+        return None, None, "У вас нет прав на выполнение этой команды."
+
+    member = discord.utils.get(ctx.guild.members, name=nickname)
+    if member is None:
+        return None, None, f"Пользователь с ником {nickname} не найден."
+
+    # Поиск роли по ID
+    role = ctx.guild.get_role(int(role_id))
+    if role is None:
+        return None, None, f"Роль с ID {role_id} не найдена."
+
+    return member, role, None
+
+async def give_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ник пользователя"), role_id: Option(str, "ID роли")):
+    member, role, error = await check_permissions_and_find_member_role(ctx, nickname, role_id)
+
+    if error:
+        await ctx.respond(error, ephemeral=True)
+        return
+
+    try:
+        await member.add_roles(role)
+        await ctx.respond(f"Пользователю {nickname} успешно назначена роль {role.name}.", ephemeral=True)
+    except Exception as e:
+        await ctx.respond(f"Произошла ошибка при назначении роли: {e}", ephemeral=True)
+
+async def remove_role(ctx: discord.ApplicationContext, nickname: Option(str, "Ник пользователя"), role_id: Option(str, "ID роли")):
+    member, role, error = await check_permissions_and_find_member_role(ctx, nickname, role_id)
+
+    if error:
+        await ctx.respond(error, ephemeral=True)
+        return
+
+    try:
+        await member.remove_roles(role)
+        await ctx.respond(f"У пользователя {nickname} успешно удалена роль {role.name}.", ephemeral=True)
+    except Exception as e:
+        await ctx.respond(f"Произошла ошибка при удалении роли: {e}", ephemeral=True)
+
+
+async def make_roles_file(ctx: discord.ApplicationContext):
+    try:
+        if ctx.author.name not in CAN_GIVES_ROLES:
+            await ctx.respond("У вас нет прав на выполнение этой команды.", ephemeral=True)
+            return
+
+        roles_info = [f"{role.id}: {role.name}" for role in ctx.guild.roles]
+
+        with open("roles_id.txt", "w", encoding="utf-8") as f:
+            f.write("\n".join(roles_info))
+
+        await ctx.respond("Файл roles_id.txt успешно создан.", ephemeral=True)
+
+    except Exception as e:
+        await ctx.respond(f"Произошла ошибка при создании файла: {e}", ephemeral=True)
+

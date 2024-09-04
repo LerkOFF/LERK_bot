@@ -2,7 +2,7 @@ import discord
 from dotenv import load_dotenv
 from config import TOKEN, GUILD_IDS, ROLE_ID_TO_MENTION, RESPOND_CHANNEL_IDS
 from insults import check_insults, load_phrases
-from user_commands import my_ckey
+from user_commands import my_ckey, give_role, remove_role, make_roles_file
 from role_events import on_member_update
 import re
 
@@ -25,6 +25,9 @@ async def on_ready():
 
 
 bot.slash_command(name='my_ckey', description='Укажите ваш сикей в игре.', guild_ids=GUILD_IDS)(my_ckey)
+bot.slash_command(name='give_role', description='Назначить роль пользователю по нику и ID роли', guild_ids=GUILD_IDS)(give_role)
+bot.slash_command(name='remove_role', description='Удалить роль у пользователя по нику и ID роли', guild_ids=GUILD_IDS)(remove_role)
+bot.slash_command(name='make_roles_file', description='Создать файл с ID и названиями всех ролей', guild_ids=GUILD_IDS)(make_roles_file)
 
 
 @bot.event
