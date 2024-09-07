@@ -1,7 +1,8 @@
 from datetime import datetime
 import discord
 from discord import Option
-from config import TRACKED_ROLES, CKEY_CHANNEL_ID, SPONSORS_FILE_PATH, CAN_GIVES_ROLES, ROLE_GIVER_CHANNEL
+from config import TRACKED_ROLES, CKEY_CHANNEL_ID, SPONSORS_FILE_PATH, CAN_GIVES_ROLES, ROLE_GIVER_CHANNEL, \
+    DISPOSABLE_FILE_PATH
 import re
 from logger import log_user_action
 
@@ -191,3 +192,54 @@ async def make_roles_file(ctx: discord.ApplicationContext):
     except Exception as e:
         await ctx.respond(f"Произошла ошибка при создании файла: {e}", ephemeral=True)
         log_user_action(f'Error creating roles file: {e}', ctx.author)
+
+
+async def add_tokens(ctx: discord.ApplicationContext, ckey: Option(str, "Ckey пользователя"),
+                     tokens: Option(int, "Количество токенов")):
+    try:
+        if ctx.author.name not in CAN_GIVES_ROLES:
+            await ctx.respond("У вас нет прав на выполнение этой команды.", ephemeral=True)
+            return
+
+        ckey_found = False
+        with open(SPONSORS_FILE_PATH, 'r') as f:
+            lines = f.readlines()
+            for line in lines:
+                if line.split(', ')[1] == ckey:
+                    ckey_found = True
+                    break
+
+        if not ckey_found:
+            await ctx.respond(
+                f"Пользователь с ckey '{ckey}' не найден в списке спонсоров. Сначала используйте команду /my_ckey.",
+                ephemeral=True)
+            return
+
+        tokens_updated = False
+        updated_lines = []
+        try:
+            with open(DISPOSABLE_FILE_PATH, 'r') as f:
+                token_lines = f.readlines()
+
+            for token_line in token_lines:
+                if token_line.split(', ')[0] == ckey:
+                    updated_lines.append(f"{ckey}, {tokens}\n")
+                    tokens_updated = True
+                else:
+                    updated_lines.append(token_line)
+
+        except FileNotFoundError:
+            updated_lines = [f"{ckey}, {tokens}\n"]
+
+        if not tokens_updated:
+            updated_lines.append(f"{ckey}, {tokens}\n")
+
+        with open(DISPOSABLE_FILE_PATH, 'w') as f:
+            f.writelines(updated_lines)
+
+        await ctx.respond(f"'{ckey}' было добавлено/обновлено '{tokens}' токенов.")
+        log_user_action(f'Tokens added/updated: {tokens} to {ckey}', ctx.author)
+
+    except Exception as e:
+        await ctx.respond(f"Произошла ошибка при добавлении токенов: {e}", ephemeral=True)
+        log_user_action(f'Error adding tokens: {e}', ctx.author)
