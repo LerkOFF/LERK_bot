@@ -215,54 +215,52 @@ async def make_roles_file(ctx: discord.ApplicationContext):
         log_user_action(f'Error creating roles file: {e}', ctx.author)
 
 
-async def add_tokens(ctx: discord.ApplicationContext, ds_nickname: Option(str, "Discord nickname пользователя"),
-                     tokens: Option(int, "Количество токенов")):
+async def add_disposable(ctx: discord.ApplicationContext, ds_nickname: Option(str, "Дискорд никнейм пользователя"),
+                         slots: Option(int, "Количество слотов"), tokens: Option(int, "Количество токенов")):
     try:
         if ctx.author.name not in CAN_GIVES_ROLES:
             await ctx.respond("У вас нет прав на выполнение этой команды.", ephemeral=True)
             return
 
-        ckey_found = False
         ckey = None
         with open(SPONSORS_FILE_PATH, 'r') as f:
             lines = f.readlines()
             for line in lines:
                 if line.split(', ')[0] == ds_nickname:
                     ckey = line.split(', ')[1]
-                    ckey_found = True
                     break
 
-        if not ckey_found:
+        if not ckey:
             await ctx.respond(
-                f"Пользователь с ником '{ds_nickname}' не найден в списке спонсоров. Сначала используйте команду /my_ckey.",
+                f"Пользователь с дискорд ником '{ds_nickname}' не найден в списке спонсоров. Сначала используйте команду /my_ckey.",
                 ephemeral=True)
             return
 
-        tokens_updated = False
+        record_updated = False
         updated_lines = []
         try:
             with open(DISPOSABLE_FILE_PATH, 'r') as f:
-                token_lines = f.readlines()
+                disposable_lines = f.readlines()
 
-            for token_line in token_lines:
-                if token_line.split(', ')[0] == ckey:
-                    updated_lines.append(f"{ckey}, {tokens}\n")
-                    tokens_updated = True
+            for disposable_line in disposable_lines:
+                if disposable_line.split(', ')[0] == ckey:
+                    updated_lines.append(f"{ckey}, {slots}, {tokens}\n")
+                    record_updated = True
                 else:
-                    updated_lines.append(token_line)
+                    updated_lines.append(disposable_line)
 
         except FileNotFoundError:
-            updated_lines = [f"{ckey}, {tokens}\n"]
+            updated_lines = [f"{ckey}, {slots}, {tokens}\n"]
 
-        if not tokens_updated:
-            updated_lines.append(f"{ckey}, {tokens}\n")
+        if not record_updated:
+            updated_lines.append(f"{ckey}, {slots}, {tokens}\n")
 
         with open(DISPOSABLE_FILE_PATH, 'w') as f:
             f.writelines(updated_lines)
 
-        await ctx.respond(f"'{ds_nickname}' было добавлено/обновлено '{tokens}' токенов (Ckey: {ckey}).")
-        log_user_action(f'Tokens added/updated: {tokens} to {ds_nickname} (Ckey: {ckey})', ctx.author)
+        await ctx.respond(f"Для '{ds_nickname}' ({ckey}) было добавлено/обновлено '{slots}' слотов и '{tokens}' токенов.")
+        log_user_action(f'Disposable slots/tokens added/updated: {slots} slots, {tokens} tokens to {ckey}', ctx.author)
 
     except Exception as e:
-        await ctx.respond(f"Произошла ошибка при добавлении токенов: {e}", ephemeral=True)
-        log_user_action(f'Error adding tokens: {e}', ctx.author)
+        await ctx.respond(f"Произошла ошибка при добавлении слотов и токенов: {e}", ephemeral=True)
+        log_user_action(f'Error adding disposable slots/tokens: {e}', ctx.author)
