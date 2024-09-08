@@ -40,10 +40,12 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
         except FileNotFoundError:
             lines = []
 
+        old_ckey = None
         with open(SPONSORS_FILE_PATH, 'w') as f:
             updated = False
             for line in lines:
                 if line.startswith(f"{member.name},"):
+                    old_ckey = line.split(', ')[1]
                     f.write(new_record)
                     updated = True
                 else:
@@ -52,11 +54,30 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
             if not updated:
                 f.write(new_record)
 
-        await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре')
+        if old_ckey:
+            try:
+                with open(DISPOSABLE_FILE_PATH, 'r') as f:
+                    disposable_lines = f.readlines()
+
+                updated_disposable_lines = []
+                for disposable_line in disposable_lines:
+                    if disposable_line.split(', ')[0] == old_ckey:
+                        updated_disposable_lines.append(f"{ckey}, {disposable_line.split(', ')[1]}\n")
+                    else:
+                        updated_disposable_lines.append(disposable_line)
+
+                with open(DISPOSABLE_FILE_PATH, 'w') as f:
+                    f.writelines(updated_disposable_lines)
+
+            except FileNotFoundError:
+                pass
+
+        await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре.')
         log_user_action(f'CKEY command used: {ckey} (default color: {default_color})', member)
 
     except Exception as e:
         await ctx.respond(f"Произошла ошибка: {e}", ephemeral=True)
+        log_user_action(f'Error updating CKEY: {e}', member)
         raise
 
 
