@@ -194,7 +194,7 @@ async def make_roles_file(ctx: discord.ApplicationContext):
         log_user_action(f'Error creating roles file: {e}', ctx.author)
 
 
-async def add_tokens(ctx: discord.ApplicationContext, ckey: Option(str, "Ckey пользователя"),
+async def add_tokens(ctx: discord.ApplicationContext, ds_nickname: Option(str, "Discord nickname пользователя"),
                      tokens: Option(int, "Количество токенов")):
     try:
         if ctx.author.name not in CAN_GIVES_ROLES:
@@ -202,16 +202,18 @@ async def add_tokens(ctx: discord.ApplicationContext, ckey: Option(str, "Ckey п
             return
 
         ckey_found = False
+        ckey = None
         with open(SPONSORS_FILE_PATH, 'r') as f:
             lines = f.readlines()
             for line in lines:
-                if line.split(', ')[1] == ckey:
+                if line.split(', ')[0] == ds_nickname:
+                    ckey = line.split(', ')[1]
                     ckey_found = True
                     break
 
         if not ckey_found:
             await ctx.respond(
-                f"Пользователь с ckey '{ckey}' не найден в списке спонсоров. Сначала используйте команду /my_ckey.",
+                f"Пользователь с ником '{ds_nickname}' не найден в списке спонсоров. Сначала используйте команду /my_ckey.",
                 ephemeral=True)
             return
 
@@ -237,8 +239,8 @@ async def add_tokens(ctx: discord.ApplicationContext, ckey: Option(str, "Ckey п
         with open(DISPOSABLE_FILE_PATH, 'w') as f:
             f.writelines(updated_lines)
 
-        await ctx.respond(f"'{ckey}' было добавлено/обновлено '{tokens}' токенов.")
-        log_user_action(f'Tokens added/updated: {tokens} to {ckey}', ctx.author)
+        await ctx.respond(f"'{ds_nickname}' было добавлено/обновлено '{tokens}' токенов (Ckey: {ckey}).")
+        log_user_action(f'Tokens added/updated: {tokens} to {ds_nickname} (Ckey: {ckey})', ctx.author)
 
     except Exception as e:
         await ctx.respond(f"Произошла ошибка при добавлении токенов: {e}", ephemeral=True)
