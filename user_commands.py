@@ -52,7 +52,7 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
             if not updated:
                 f.write(new_record)
 
-        await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре. Цвет установлен по умолчанию: {default_color}.')
+        await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре')
         log_user_action(f'CKEY command used: {ckey} (default color: {default_color})', member)
 
     except Exception as e:
