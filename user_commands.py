@@ -34,14 +34,15 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
         default_color = "#FF0000"
         new_record = f"{member.name}, {ckey}, {tracked_roles[0]}, {time_now}, {default_color}\n"
 
+        # Обновление в SPONSORS_FILE_PATH
         try:
-            with open(SPONSORS_FILE_PATH, 'r') as f:
+            with open(SPONSORS_FILE_PATH, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
         except FileNotFoundError:
             lines = []
 
         old_ckey = None
-        with open(SPONSORS_FILE_PATH, 'w') as f:
+        with open(SPONSORS_FILE_PATH, 'w', encoding='utf-8') as f:
             updated = False
             for line in lines:
                 if line.startswith(f"{member.name},"):
@@ -54,23 +55,33 @@ async def my_ckey(ctx: discord.ApplicationContext, ckey: Option(str, "Ваш с�
             if not updated:
                 f.write(new_record)
 
+        # Обновление ckey в DISPOSABLE_FILE_PATH, если найден старый
         if old_ckey:
             try:
-                with open(DISPOSABLE_FILE_PATH, 'r') as f:
+                with open(DISPOSABLE_FILE_PATH, 'r', encoding='utf-8') as f:
                     disposable_lines = f.readlines()
 
                 updated_disposable_lines = []
                 for disposable_line in disposable_lines:
-                    if disposable_line.split(', ')[0] == old_ckey:
-                        updated_disposable_lines.append(f"{ckey}, {disposable_line.split(', ')[1]}\n")
+                    parts = disposable_line.strip().split(', ')
+                    if len(parts) >= 1 and parts[0] == old_ckey:
+                        # Предполагается формат: "ckey, slots, tokens"
+                        if len(parts) == 3:
+                            updated_disposable_lines.append(f"{ckey}, {parts[1]}, {parts[2]}\n")
+                        elif len(parts) == 2:
+                            # Если только ckey и слоты, добавляем токены
+                            updated_disposable_lines.append(f"{ckey}, {parts[1]}, 0\n")  # Пример: устанавливаем токены как 0
+                        else:
+                            # Если формат отличается, оставляем без изменений
+                            updated_disposable_lines.append(disposable_line)
                     else:
                         updated_disposable_lines.append(disposable_line)
 
-                with open(DISPOSABLE_FILE_PATH, 'w') as f:
+                with open(DISPOSABLE_FILE_PATH, 'w', encoding='utf-8') as f:
                     f.writelines(updated_disposable_lines)
 
             except FileNotFoundError:
-                pass
+                pass  # Если файла нет, ничего не делаем
 
         await ctx.respond(f'Сикей "{ckey}" был установлен для спонсорского магазина в игре.')
         log_user_action(f'CKEY command used: {ckey} (default color: {default_color})', member)
@@ -92,6 +103,7 @@ async def change_my_name_color(ctx: discord.ApplicationContext, color_hex: Optio
             await ctx.respond(f"Эта команда может использоваться только в канале {ckey_channel.mention}.", ephemeral=True)
             return
 
+        # Проверка на корректный формат HEX-кода
         if not re.match(r'^#([A-Fa-f0-9]{6})$', color_hex):
             await ctx.respond("Неверный формат HEX-кода. Используйте формат #RRGGBB.", ephemeral=True)
             return
@@ -108,7 +120,7 @@ async def change_my_name_color(ctx: discord.ApplicationContext, color_hex: Optio
         updated_lines = []
 
         try:
-            with open(SPONSORS_FILE_PATH, 'r') as f:
+            with open(SPONSORS_FILE_PATH, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
 
             for line in lines:
@@ -131,7 +143,7 @@ async def change_my_name_color(ctx: discord.ApplicationContext, color_hex: Optio
             await ctx.respond("Ваша запись не найдена. Пожалуйста, сначала используйте команду /my_ckey.", ephemeral=True)
             return
 
-        with open(SPONSORS_FILE_PATH, 'w') as f:
+        with open(SPONSORS_FILE_PATH, 'w', encoding='utf-8') as f:
             f.writelines(updated_lines)
 
         await ctx.respond(f"Цвет вашего имени успешно изменён на {color_hex}.")
@@ -222,8 +234,9 @@ async def add_disposable(ctx: discord.ApplicationContext, ds_nickname: Option(st
             await ctx.respond("У вас нет прав на выполнение этой команды.", ephemeral=True)
             return
 
+        # Поиск ckey по ds_nickname в SPONSORS_FILE_PATH
         ckey = None
-        with open(SPONSORS_FILE_PATH, 'r') as f:
+        with open(SPONSORS_FILE_PATH, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             for line in lines:
                 if line.split(', ')[0] == ds_nickname:
@@ -236,15 +249,25 @@ async def add_disposable(ctx: discord.ApplicationContext, ds_nickname: Option(st
                 ephemeral=True)
             return
 
+        # Обновляем или добавляем запись в DISPOSABLE_FILE_PATH
         record_updated = False
         updated_lines = []
         try:
-            with open(DISPOSABLE_FILE_PATH, 'r') as f:
+            with open(DISPOSABLE_FILE_PATH, 'r', encoding='utf-8') as f:
                 disposable_lines = f.readlines()
 
             for disposable_line in disposable_lines:
-                if disposable_line.split(', ')[0] == ckey:
-                    updated_lines.append(f"{ckey}, {slots}, {tokens}\n")
+                parts = disposable_line.strip().split(', ')
+                if len(parts) >= 1 and parts[0] == ckey:
+                    # Если ckey существует, обновляем слоты и токены
+                    if len(parts) == 3:
+                        updated_lines.append(f"{ckey}, {slots}, {tokens}\n")
+                    elif len(parts) == 2:
+                        # Если только ckey и слоты, добавляем токены
+                        updated_lines.append(f"{ckey}, {slots}, {tokens}\n")
+                    else:
+                        # Если формат отличается, оставляем без изменений
+                        updated_lines.append(disposable_line)
                     record_updated = True
                 else:
                     updated_lines.append(disposable_line)
@@ -252,13 +275,15 @@ async def add_disposable(ctx: discord.ApplicationContext, ds_nickname: Option(st
         except FileNotFoundError:
             updated_lines = [f"{ckey}, {slots}, {tokens}\n"]
 
+        # Если ckey не был найден, добавляем новую строку
         if not record_updated:
             updated_lines.append(f"{ckey}, {slots}, {tokens}\n")
 
-        with open(DISPOSABLE_FILE_PATH, 'w') as f:
+        # Перезапись файла с обновлённой информацией
+        with open(DISPOSABLE_FILE_PATH, 'w', encoding='utf-8') as f:
             f.writelines(updated_lines)
 
-        await ctx.respond(f"Для '{ds_nickname}' ({ckey}) было добавлено/обновлено '{slots}' слотов и '{tokens}' токенов.")
+        await ctx.respond(f"Для '{ds_nickname}' ({ckey}) было добавлено/обновлено '{slots}' слотов и '{tokens}' токенов.", ephemeral=True)
         log_user_action(f'Disposable slots/tokens added/updated: {slots} slots, {tokens} tokens to {ckey}', ctx.author)
 
     except Exception as e:
